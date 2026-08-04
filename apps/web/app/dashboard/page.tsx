@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { UsageChart } from "@/components/UsageChart";
+import { SeedDemoDataButton } from "@/components/SeedDemoDataButton";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -13,11 +17,27 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   const { data: links } = await supabase
     .from("energy_provider_links")
     .select("id, provider, external_account_id, status, linked_at")
     .eq("user_id", user.id)
     .order("linked_at", { ascending: false });
+
+  let usage: { date: string; kwh: number }[] = [];
+  if (session) {
+    const res = await fetch(`${API_URL}/telemetry/summary`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const body = await res.json();
+      usage = body.data ?? [];
+    }
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
@@ -76,10 +96,27 @@ export default async function DashboardPage() {
         )}
       </section>
 
+      <section className="mt-12">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-brand-charcoal">
+            Usage, last 30 days
+          </h2>
+          {links && links.length > 0 && <SeedDemoDataButton />}
+        </div>
+        <div className="mt-4">
+          <UsageChart data={usage} />
+        </div>
+        {usage.length > 0 && (
+          <p className="mt-2 text-xs text-neutral-400">
+            Synthetic demo data — Session 7 replaces this with real provider telemetry.
+          </p>
+        )}
+      </section>
+
       <section className="mt-12 rounded-xl bg-brand-gray/60 p-6">
         <p className="text-sm text-neutral-600">
-          Earnings and payout history will appear here once your usage data
-          starts flowing in — that's Session 3 and beyond.
+          Earnings and payout history will appear here once carbon batches
+          start being created from this usage — that's Session 4 and beyond.
         </p>
       </section>
     </main>

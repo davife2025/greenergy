@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" width="460" height="120">
+  <title>Greenenergy logo</title>
+  <desc>Icon and wordmark logo for Greenenergy: a leaf outline containing an upward growth line, next to the lowercase wordmark "greenenergy".</desc>
+
+  <!-- Icon: leaf outline (verified clean energy) with an ascending growth line inside (revenue/yield) -->
+  <g transform="translate(10,10)">
+    <path d="M50,14 C22,24 8,52 50,96 C92,52 78,24 50,14 Z"
+          fill="none" stroke="#1D9E75" stroke-width="6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M32,80 L46,50 L38,40 L66,16"
+          fill="none" stroke="#2C2C2A" stroke-width="6"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M66,16 L52,20 L62,30 Z" fill="#2C2C2A"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="132" y="74"
+        font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-weight="600" font-size="44" letter-spacing="-1"
+        fill="#2C2C2A">greenenergy</text>
+</svg>

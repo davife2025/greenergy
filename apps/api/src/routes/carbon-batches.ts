@@ -2,14 +2,24 @@ import type { FastifyInstance } from "fastify";
 import { supabase } from "../lib/supabase.js";
 import { requireAdminSecret } from "../lib/admin-auth.js";
 import { estimateTonsCo2e, isPlausibleReading } from "../lib/carbon.js";
+import { detectStatisticalAnomalies } from "../lib/anomaly-detection.js";
+import { reviewBatch } from "../lib/ai-review.js";
 
 export async function carbonBatchesRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAdminSecret);
 
   // Pools every telemetry reading that hasn't been included in a batch yet,
-  // runs a rule-based sanity check on each, and creates a new carbon_batch.
-  // Meant to run on a schedule (e.g. daily/weekly cron) once real telemetry
-  // volume justifies it — called manually for now.
+  // runs it through two layers of verification, and creates a new
+  // carbon_batch. Meant to run on a schedule once real telemetry volume
+  // justifies it — called manually for now.
+  //
+  // Layer 1 (deterministic, always runs): a flat plausibility bound
+  // (Session 4) plus per-link statistical anomaly detection (Session 6) —
+  // flags readings that deviate from that specific meter's own history.
+  // Layer 2 (optional, AI-assisted): if ANTHROPIC_API_KEY is configured,
+  // Claude reviews the aggregate stats and can downgrade a batch to
+  // "pending" for human review — it can add caution, never override a
+  // deterministic rejection.
   app.post("/admin/carbon-batches/aggregate", async (_request, reply) => {
     const { data: alreadyBatched, error: batchedError } = await supabase
       .from("carbon_batch_readings")
@@ -23,7 +33,7 @@ export async function carbonBatchesRoutes(app: FastifyInstance) {
 
     const { data: readings, error: readingsError } = await supabase
       .from("telemetry_readings")
-      .select("id, kwh");
+      .select("id, kwh, energy_provider_link_id");
 
     if (readingsError) {
       return reply.status(500).send({ status: "error", message: readingsError.message });
@@ -35,24 +45,54 @@ export async function carbonBatchesRoutes(app: FastifyInstance) {
       return reply.status(200).send({ status: "ok", message: "No unbatched readings to aggregate." });
     }
 
-    const included = unbatched.filter((r) => isPlausibleReading(Number(r.kwh)));
-    const excluded = unbatched.filter((r) => !isPlausibleReading(Number(r.kwh)));
+    // Per-link statistical anomaly check, run against each link's full
+    // reading history (not just the unbatched subset) for a meaningful
+    // baseline.
+    const linkIds = new Set(unbatched.map((r) => r.energy_provider_link_id));
+    const anomalyFlaggedIds = new Set<string>();
+
+    for (const linkId of linkIds) {
+      const { data: linkReadings, error: linkReadingsError } = await supabase
+        .from("telemetry_readings")
+        .select("id, kwh")
+        .eq("energy_provider_link_id", linkId);
+
+      if (linkReadingsError || !linkReadings) continue;
+
+      const result = detectStatisticalAnomalies(
+        linkReadings.map((r) => ({ id: r.id, kwh: Number(r.kwh) }))
+      );
+      for (const id of result.flaggedIds) anomalyFlaggedIds.add(id);
+    }
+
+    const included = unbatched.filter(
+      (r) => isPlausibleReading(Number(r.kwh)) && !anomalyFlaggedIds.has(r.id)
+    );
+    const excluded = unbatched.filter(
+      (r) => !isPlausibleReading(Number(r.kwh)) || anomalyFlaggedIds.has(r.id)
+    );
 
     const totalKwh = included.reduce((sum, r) => sum + Number(r.kwh), 0);
     const estimatedTonsCo2e = estimateTonsCo2e(totalKwh);
+    const deterministicallyClean = excluded.length === 0;
 
-    // If every reading in this pool passed the sanity check, there's nothing
-    // for a human/AI reviewer to look at — go straight to "verified". Session 6
-    // replaces this rule-based pass with real ML-based fraud/anomaly detection.
-    const allClean = excluded.length === 0;
+    const aiReview = await reviewBatch({
+      readingCount: unbatched.length,
+      flaggedCount: excluded.length,
+      totalKwh: Number(totalKwh.toFixed(4)),
+    });
+
+    const finalStatus =
+      deterministicallyClean && aiReview?.verdict !== "flag" ? "verified" : "pending";
 
     const { data: batch, error: batchError } = await supabase
       .from("carbon_batches")
       .insert({
-        status: allClean ? "verified" : "pending",
+        status: finalStatus,
         total_kwh: Number(totalKwh.toFixed(4)),
         estimated_tons_co2e: estimatedTonsCo2e,
-        verified_at: allClean ? new Date().toISOString() : null,
+        verified_at: finalStatus === "verified" ? new Date().toISOString() : null,
+        review_notes: aiReview?.summary ?? null,
       })
       .select()
       .single();
@@ -78,6 +118,7 @@ export async function carbonBatchesRoutes(app: FastifyInstance) {
       readingsIncluded: included.length,
       readingsExcluded: excluded.length,
       excludedReadingIds: excluded.map((r) => r.id),
+      aiReviewRan: aiReview !== null,
     });
   });
 

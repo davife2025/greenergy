@@ -1,0 +1,38 @@
+# Fly.io config for @greenenergy/api.
+# Deploy from the repo root: fly launch --dockerfile apps/api/Dockerfile
+# (first time), then `fly deploy` for subsequent deploys.
+#
+# Rename `app` below once `fly launch` assigns you a real app name.
+
+app = "greenenergy-api"
+primary_region = "lhr"  # London — closest Fly region to Nigeria at time of writing; re-check latency once live.
+
+[build]
+  dockerfile = "apps/api/Dockerfile"
+
+[env]
+  PORT = "4000"
+  NODE_ENV = "production"
+
+[[services]]
+  internal_port = 4000
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[services.http_checks]]
+  path = "/health"
+  interval = "15s"
+  timeout = "5s"

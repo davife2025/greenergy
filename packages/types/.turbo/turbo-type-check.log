@@ -1,0 +1,4 @@
+
+> @greenenergy/types@0.1.0 type-check /home/claude/greenenergy/packages/types
+> tsc --noEmit
+

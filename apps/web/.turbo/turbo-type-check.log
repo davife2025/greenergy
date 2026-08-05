@@ -1,0 +1,4 @@
+
+> @greenenergy/web@0.1.0 type-check /home/claude/greenenergy/apps/web
+> tsc --noEmit
+

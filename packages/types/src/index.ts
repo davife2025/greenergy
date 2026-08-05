@@ -37,6 +37,8 @@ export interface TelemetryReading {
   kwh: number;
   readingStart: string;
   readingEnd: string;
+  source: "synthetic" | "self_reported" | "partner_api";
+  evidenceUrl: string | null;
   ingestedAt: string;
 }
 
@@ -51,6 +53,7 @@ export interface CarbonBatch {
   totalKwh: number;
   estimatedTonsCo2e: number;
   registrySubmissionId: string | null;
+  reviewNotes: string | null;
   createdAt: string;
   verifiedAt: string | null;
 }

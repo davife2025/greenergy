@@ -133,7 +133,15 @@ export default async function DashboardPage() {
           <h2 className="text-lg font-semibold text-brand-charcoal">
             Usage, last 30 days
           </h2>
-          {links && links.length > 0 && <SeedDemoDataButton />}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/report-usage"
+              className="rounded-full bg-brand-green px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-green-deep"
+            >
+              Report usage
+            </Link>
+            {links && links.length > 0 && <SeedDemoDataButton />}
+          </div>
         </div>
         <div className="mt-4">
           <UsageChart data={usage} />

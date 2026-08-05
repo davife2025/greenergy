@@ -3,6 +3,12 @@ import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { env } from "./lib/env.js";
 import { healthRoutes } from "./routes/health.js";
+import { energyLinksRoutes } from "./routes/energy-links.js";
+import { telemetryRoutes } from "./routes/telemetry.js";
+import { carbonBatchesRoutes } from "./routes/carbon-batches.js";
+import { usersRoutes } from "./routes/users.js";
+import { payoutsRoutes } from "./routes/payouts.js";
+import { adminReviewRoutes } from "./routes/admin-review.js";
 
 async function main() {
   const app = Fastify({
@@ -16,9 +22,14 @@ async function main() {
   });
 
   await app.register(healthRoutes);
+  await app.register(energyLinksRoutes);
+  await app.register(telemetryRoutes);
+  await app.register(carbonBatchesRoutes);
+  await app.register(usersRoutes);
+  await app.register(payoutsRoutes);
+  await app.register(adminReviewRoutes);
 
   // Future route groups will register here, e.g.:
-  // await app.register(energyLinksRoutes, { prefix: "/energy-links" });
   // await app.register(payoutsRoutes, { prefix: "/payouts" });
 
   try {

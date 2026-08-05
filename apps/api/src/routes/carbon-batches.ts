@@ -8,14 +8,17 @@ import { reviewBatch } from "../lib/ai-review.js";
 export async function carbonBatchesRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAdminSecret);
 
-  // Pools every telemetry reading that hasn't been included in a batch yet,
-  // runs it through two layers of verification, and creates a new
-  // carbon_batch. Meant to run on a schedule once real telemetry volume
-  // justifies it — called manually for now.
+  // Pools every telemetry reading that hasn't been included in a batch yet
+  // and isn't currently flagged for review, runs it through two layers of
+  // verification, and creates a new carbon_batch. Meant to run on a
+  // schedule once real telemetry volume justifies it — called manually
+  // for now.
   //
   // Layer 1 (deterministic, always runs): a flat plausibility bound
-  // (Session 4) plus per-link statistical anomaly detection (Session 6) —
-  // flags readings that deviate from that specific meter's own history.
+  // (Session 4) plus per-link statistical anomaly detection (Session 6).
+  // Anything that fails either check is marked `flagged` with a reason
+  // and left for manual review (Session 9) instead of just silently
+  // disappearing.
   // Layer 2 (optional, AI-assisted): if ANTHROPIC_API_KEY is configured,
   // Claude reviews the aggregate stats and can downgrade a batch to
   // "pending" for human review — it can add caution, never override a
@@ -31,9 +34,13 @@ export async function carbonBatchesRoutes(app: FastifyInstance) {
 
     const batchedIds = new Set((alreadyBatched ?? []).map((r) => r.telemetry_reading_id));
 
+    // Only readings that aren't already batched AND aren't currently
+    // flagged (pending or rejected review) are candidates. Previously-
+    // approved readings (flagged=false after review) are eligible again.
     const { data: readings, error: readingsError } = await supabase
       .from("telemetry_readings")
-      .select("id, kwh, energy_provider_link_id");
+      .select("id, kwh, energy_provider_link_id")
+      .eq("flagged", false);
 
     if (readingsError) {
       return reply.status(500).send({ status: "error", message: readingsError.message });
@@ -68,9 +75,26 @@ export async function carbonBatchesRoutes(app: FastifyInstance) {
     const included = unbatched.filter(
       (r) => isPlausibleReading(Number(r.kwh)) && !anomalyFlaggedIds.has(r.id)
     );
-    const excluded = unbatched.filter(
-      (r) => !isPlausibleReading(Number(r.kwh)) || anomalyFlaggedIds.has(r.id)
+    const excludedImplausible = unbatched.filter((r) => !isPlausibleReading(Number(r.kwh)));
+    const excludedAnomalous = unbatched.filter(
+      (r) => isPlausibleReading(Number(r.kwh)) && anomalyFlaggedIds.has(r.id)
     );
+    const excluded = [...excludedImplausible, ...excludedAnomalous];
+
+    // Mark excluded readings as flagged so they show up in the review
+    // queue instead of silently vanishing.
+    if (excludedImplausible.length > 0) {
+      await supabase
+        .from("telemetry_readings")
+        .update({ flagged: true, flag_reason: "implausible_value", review_status: "pending" })
+        .in("id", excludedImplausible.map((r) => r.id));
+    }
+    if (excludedAnomalous.length > 0) {
+      await supabase
+        .from("telemetry_readings")
+        .update({ flagged: true, flag_reason: "statistical_anomaly", review_status: "pending" })
+        .in("id", excludedAnomalous.map((r) => r.id));
+    }
 
     const totalKwh = included.reduce((sum, r) => sum + Number(r.kwh), 0);
     const estimatedTonsCo2e = estimateTonsCo2e(totalKwh);

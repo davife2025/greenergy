@@ -5,6 +5,20 @@ Three services to stand up: **Supabase** (database + auth), **Fly.io**
 None of this can be done from inside a chat session — it needs your
 accounts and credentials. This is the exact sequence to run yourself.
 
+## 0. Before anything else — run the preflight check
+
+```bash
+cd apps/api
+pnpm preflight
+```
+
+This checks you're using pnpm (not npm/yarn — a real bug hit earlier in
+this project), your Node version, every required env var is actually
+set, and — critically — **actually tests the connection** to Supabase
+and validates the Paystack key against Paystack's real API, rather than
+just checking the variables exist. Fix everything it flags before going
+further; every step below assumes this passes first.
+
 ## 1. Supabase
 
 1. Create a project at supabase.com.
@@ -64,7 +78,21 @@ curl https://greenenergy-api.fly.dev/health
    then `fly deploy` again) — the API will reject browser requests from
    the web app otherwise.
 
-## 4. Smoke test the whole thing
+## 4. Configure the Paystack webhook (required for the marketplace)
+
+Paystack dashboard → Settings → API Keys & Webhooks → set the webhook URL
+to:
+
+```
+https://greenenergy-api.fly.dev/webhooks/paystack
+```
+
+Without this, payments complete on Paystack's side but the app never
+finds out — `energy_requests` rows get stuck at `pending_payment`
+forever. Not optional for the excess-energy marketplace (Session 13) to
+work at all.
+
+## 5. Smoke test the whole thing
 
 - Visit the Vercel URL, log in with a real phone number, confirm the OTP
   arrives.
@@ -75,6 +103,10 @@ curl https://greenenergy-api.fly.dev/health
   `curl -X POST .../admin/payouts/process -H "x-admin-secret: <secret>"`
   — with a Paystack **test** key this won't move real money but should
   return a `sent` result.
+- **Marketplace**: set up a solar profile and list it, search for it from
+  a second account, request & pay with a Paystack test card, confirm the
+  webhook fires (check Fly logs), then confirm receipt and check the
+  host's payout status.
 
 ## What CI does and doesn't do
 

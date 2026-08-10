@@ -1,4 +1,0 @@
-
-> @greenenergy/types@0.1.0 build /home/claude/greenenergy/packages/types
-> tsc -p tsconfig.json
-

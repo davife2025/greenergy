@@ -73,3 +73,45 @@ export interface Payout {
   status: PayoutStatus;
   createdAt: string;
 }
+
+// ── Excess energy marketplace ────────────────────────────
+// A host's solar generation/consumption profile, and the resulting
+// excess capacity listed for other people nearby to access (device
+// charging, etc). Deliberately a simple daily-average model, not
+// time-series telemetry.
+
+export interface SolarProfile {
+  id: string;
+  userId: string;
+  panelWatts: number | null;
+  dailyGenerationKwh: number;
+  dailyConsumptionKwh: number;
+  excessKwh: number;
+  locationText: string;
+  pricePerSessionNgn: number;
+  isListed: boolean;
+  updatedAt: string;
+}
+
+export type EnergyRequestStatus =
+  | "pending_payment"
+  | "paid"
+  | "confirmed"
+  | "paid_out"
+  | "cancelled"
+  | "disputed";
+
+export interface EnergyRequest {
+  id: string;
+  seekerId: string;
+  hostId: string;
+  solarProfileId: string;
+  amountNgn: number;
+  platformCommissionNgn: number;
+  hostPayoutNgn: number;
+  status: EnergyRequestStatus;
+  paystackReference: string | null;
+  createdAt: string;
+  paidAt: string | null;
+  confirmedAt: string | null;
+}

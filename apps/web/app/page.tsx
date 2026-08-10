@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+
 function LeafMark({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
@@ -75,7 +78,16 @@ const steps = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const primaryCta = user
+    ? { href: "/dashboard", label: "Go to dashboard" }
+    : { href: "/login", label: "Get started" };
+
   return (
     <main className="min-h-screen bg-white">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
@@ -85,12 +97,12 @@ export default function Home() {
             greenenergy
           </span>
         </div>
-        <a
-          href="#waitlist"
+        <Link
+          href={primaryCta.href}
           className="rounded-full bg-brand-charcoal px-4 py-2 text-sm font-medium text-white transition hover:bg-black"
         >
-          Join the waitlist
-        </a>
+          {primaryCta.label}
+        </Link>
       </header>
 
       <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 py-16 sm:py-24 lg:grid-cols-2">
@@ -108,12 +120,12 @@ export default function Home() {
             mobile money wallet.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <a
-              href="#waitlist"
+            <Link
+              href={primaryCta.href}
               className="rounded-full bg-brand-green px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-green-deep"
             >
-              Join the waitlist
-            </a>
+              {primaryCta.label}
+            </Link>
             <a
               href="#how-it-works"
               className="text-sm font-medium text-brand-charcoal underline decoration-neutral-300 underline-offset-4 hover:decoration-brand-charcoal"
@@ -149,10 +161,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer
-        id="waitlist"
-        className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-6 py-16 sm:flex-row sm:items-center"
-      >
+      <footer className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-6 py-16 sm:flex-row sm:items-center">
         <div className="flex items-center gap-2">
           <LeafMark className="h-5 w-5" />
           <span className="text-sm text-neutral-500">

@@ -26,3 +26,12 @@ export function batchValueNgn(estimatedTonsCo2e: number): number {
   const usd = estimatedTonsCo2e * CARBON_CREDIT_PRICE_USD_PER_TON;
   return usd * USD_TO_NGN_RATE;
 }
+
+/**
+ * Platform's commission on excess-energy marketplace transactions
+ * (Session 13) — a direct, real transaction, unlike the still-simulated
+ * carbon credit revenue above. 20% is a starting default in line with
+ * typical two-sided marketplace commissions (Uber, Airbnb land in a
+ * similar range) — a real decision to revisit, not a fact.
+ */
+export const MARKETPLACE_COMMISSION_RATE = 0.2;

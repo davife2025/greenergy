@@ -1,4 +1,13 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js"
+  "/admin/page": "app/admin/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/dashboard/link-account/page": "app/dashboard/link-account/page.js",
+  "/dashboard/report-usage/page": "app/dashboard/report-usage/page.js",
+  "/dashboard/payout-method/page": "app/dashboard/payout-method/page.js",
+  "/dashboard/my-requests/page": "app/dashboard/my-requests/page.js",
+  "/dashboard/solar-profile/page": "app/dashboard/solar-profile/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/find-energy/page": "app/dashboard/find-energy/page.js"
 }

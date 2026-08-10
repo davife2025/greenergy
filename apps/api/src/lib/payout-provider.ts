@@ -1,6 +1,4 @@
-import { env } from "./env.js";
-
-const PAYSTACK_BASE_URL = "https://api.paystack.co";
+import { paystackRequest } from "./paystack-client.js";
 
 /**
  * Nigerian fintech/mobile-money wallets are NUBAN accounts under the hood
@@ -9,9 +7,9 @@ const PAYSTACK_BASE_URL = "https://api.paystack.co";
  * separate "mobile money" recipient type needed here (that Paystack
  * feature is Ghana/Kenya-only, not applicable to this Nigeria pilot).
  *
- * Codes confirmed against Paystack's List Banks endpoint as of this
- * session — re-verify via that endpoint before going live, since these
- * can occasionally change.
+ * Codes confirmed against Paystack's List Banks endpoint as of Session 5
+ * — re-verify via that endpoint before going live, since these can
+ * occasionally change.
  */
 const BANK_CODES: Record<string, string> = {
   opay: "999992",
@@ -30,25 +28,6 @@ interface InitiateTransferInput {
   amountNgn: number;
   reason: string;
   reference: string;
-}
-
-async function paystackRequest<T>(path: string, init: RequestInit): Promise<T> {
-  const res = await fetch(`${PAYSTACK_BASE_URL}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}`,
-      "Content-Type": "application/json",
-      ...init.headers,
-    },
-  });
-
-  const body = (await res.json()) as { status: boolean; message?: string; data: T };
-
-  if (!res.ok || body.status === false) {
-    throw new Error(body.message ?? `Paystack request to ${path} failed (${res.status})`);
-  }
-
-  return body.data as T;
 }
 
 export function isSupportedPayoutProvider(provider: string): boolean {

@@ -24,10 +24,10 @@ export interface AggregationResult {
  * (Session 4) plus per-link statistical anomaly detection (Session 6).
  * Anything that fails either check is marked `flagged` with a reason and
  * left for manual review (Session 9) instead of silently disappearing.
- * Layer 2 (optional, AI-assisted): if ANTHROPIC_API_KEY is configured,
- * Claude reviews the aggregate stats and can downgrade a batch to
- * "pending" — it can add caution, never override a deterministic
- * rejection.
+ * Layer 2 (optional, AI-assisted): if HF_TOKEN is configured, Kimi K2
+ * (via Hugging Face Inference Providers) reviews the aggregate stats and
+ * can downgrade a batch to "pending" — it can add caution, never
+ * override a deterministic rejection.
  *
  * Called by both the `/admin/carbon-batches/aggregate` route (manual
  * trigger) and the scheduler (Session 12) — this is the single source of

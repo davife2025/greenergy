@@ -46,7 +46,7 @@ fly secrets set \
   SUPABASE_SERVICE_ROLE_KEY=... \
   ADMIN_JOB_SECRET=$(openssl rand -hex 32) \
   PAYSTACK_SECRET_KEY=... \
-  ANTHROPIC_API_KEY=... \
+  HF_TOKEN=... \
   API_CORS_ORIGIN=https://your-web-domain.vercel.app
 ```
 

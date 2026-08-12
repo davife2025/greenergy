@@ -11,7 +11,13 @@ const envSchema = z.object({
   ADMIN_JOB_SECRET: z.string().min(16, "ADMIN_JOB_SECRET should be a long random string"),
   PAYSTACK_SECRET_KEY: z.string().min(1),
   // Optional — if unset, batches rely on deterministic checks alone.
-  ANTHROPIC_API_KEY: z.string().optional(),
+  // Hugging Face access token (from huggingface.co/settings/tokens),
+  // used to call Kimi K2 via HF's Inference Providers router.
+  HF_TOKEN: z.string().optional(),
+  // Model id, optionally suffixed with :<provider> to pin a specific
+  // backend (e.g. "moonshotai/Kimi-K2-Instruct-0905:together"). Omit the
+  // suffix to let HF pick the fastest available provider.
+  HF_INFERENCE_MODEL: z.string().default("moonshotai/Kimi-K2-Instruct-0905"),
   // "false" disables the scheduler entirely — anything else (including
   // unset, which defaults to "true") enables it. Deliberately not
   // z.coerce.boolean(), which treats ANY non-empty string as true.

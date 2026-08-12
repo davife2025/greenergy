@@ -1,0 +1,4 @@
+
+> @greenenergy/types@0.1.0 build /Users/macbookpro/Desktop/greenergy/packages/types
+> tsc -p tsconfig.json
+

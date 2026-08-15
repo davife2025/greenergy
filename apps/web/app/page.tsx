@@ -132,6 +132,12 @@ export default async function Home() {
             >
               See how it works
             </a>
+            <Link
+              href="/find-energy"
+              className="text-sm font-medium text-brand-charcoal underline decoration-neutral-300 underline-offset-4 hover:decoration-brand-charcoal"
+            >
+              Browse energy near you
+            </Link>
           </div>
         </div>
 

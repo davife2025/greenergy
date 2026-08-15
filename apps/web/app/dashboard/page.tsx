@@ -62,7 +62,7 @@ export default async function DashboardPage() {
       <h1 className="font-display text-2xl font-bold text-brand-charcoal">
         Your dashboard
       </h1>
-      <p className="mt-1 text-sm text-neutral-500">{user.phone}</p>
+      <p className="mt-1 text-sm text-neutral-500">{user.email}</p>
 
       {!hasPayoutMethod && (
         <div className="mt-6 flex items-center justify-between rounded-xl bg-brand-amber/15 px-5 py-4">

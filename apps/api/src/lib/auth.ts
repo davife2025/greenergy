@@ -28,3 +28,22 @@ export async function requireAuth(request: FastifyRequest, reply: FastifyReply) 
 
   request.userId = data.user.id;
 }
+
+/**
+ * Best-effort auth for routes that must work for anonymous visitors
+ * (e.g. browsing the marketplace) but behave slightly differently if the
+ * caller happens to be logged in (e.g. excluding your own listing from
+ * search results). Never rejects the request — if there's no token, or
+ * it's invalid, `request.userId` is simply left unset.
+ */
+export async function optionalAuth(request: FastifyRequest, _reply: FastifyReply) {
+  const authHeader = request.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+  if (!token) return;
+
+  const { data } = await supabase.auth.getUser(token);
+  if (data.user) {
+    request.userId = data.user.id;
+  }
+}

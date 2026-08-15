@@ -3,7 +3,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/find-energy", label: "Find energy" },
+  { href: "/find-energy", label: "Find energy" },
   { href: "/dashboard/solar-profile", label: "My listing" },
   { href: "/dashboard/my-requests", label: "My requests" },
   { href: "/dashboard/link-account", label: "Link account" },

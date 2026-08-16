@@ -1,48 +1,31 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type Step = "email" | "otp";
-
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const linkExpired = searchParams.get("error") === "link_expired_or_invalid";
 
-  async function sendCode(e: React.FormEvent) {
+  async function sendLink(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithOtp({ email });
-
-    setLoading(false);
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setStep("otp");
-  }
-
-  async function verifyCode(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    const { error } = await supabase.auth.verifyOtp({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      token: code,
-      type: "email",
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?redirect_to=${encodeURIComponent(redirectTo)}`,
+      },
     });
 
     setLoading(false);
@@ -50,80 +33,68 @@ function LoginForm() {
       setError(error.message);
       return;
     }
-    router.push(redirectTo);
-    router.refresh();
+    setSent(true);
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-brand-gray/40 px-6">
       <div className="w-full max-w-sm rounded-2xl border border-black/5 bg-white p-8 shadow-lg shadow-brand-charcoal/5">
-        <h1 className="font-display text-2xl font-bold text-brand-charcoal">
-          {step === "email" ? "Log in or sign up" : "Enter the code"}
-        </h1>
-        <p className="mt-2 text-sm text-neutral-500">
-          {step === "email"
-            ? "We'll email you a one-time code — no password needed."
-            : `We sent a code to ${email}.`}
-        </p>
-
-        {step === "email" ? (
-          <form onSubmit={sendCode} className="mt-6 space-y-4">
-            <div>
-              <label htmlFor="email" className="text-sm font-medium text-brand-charcoal">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
-              />
-            </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-full bg-brand-green px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-green-deep disabled:opacity-50"
-            >
-              {loading ? "Sending…" : "Send code"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={verifyCode} className="mt-6 space-y-4">
-            <div>
-              <label htmlFor="code" className="text-sm font-medium text-brand-charcoal">
-                6-digit code
-              </label>
-              <input
-                id="code"
-                type="text"
-                inputMode="numeric"
-                required
-                placeholder="123456"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
-              />
-            </div>
-            {error && <p className="text-sm text-red-600">{error}</p>}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-full bg-brand-green px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-green-deep disabled:opacity-50"
-            >
-              {loading ? "Verifying…" : "Verify and continue"}
-            </button>
+        {sent ? (
+          <>
+            <h1 className="font-display text-2xl font-bold text-brand-charcoal">
+              Check your inbox
+            </h1>
+            <p className="mt-2 text-sm text-neutral-500">
+              We sent a login link to <strong>{email}</strong>. Open it on
+              this device to log in — no code needed.
+            </p>
             <button
               type="button"
-              onClick={() => setStep("email")}
-              className="w-full text-center text-sm text-neutral-500 hover:text-brand-charcoal"
+              onClick={() => setSent(false)}
+              className="mt-6 w-full text-center text-sm text-neutral-500 hover:text-brand-charcoal"
             >
               Use a different email
             </button>
-          </form>
+          </>
+        ) : (
+          <>
+            <h1 className="font-display text-2xl font-bold text-brand-charcoal">
+              Log in or sign up
+            </h1>
+            <p className="mt-2 text-sm text-neutral-500">
+              We'll email you a login link — no password needed.
+            </p>
+            {linkExpired && (
+              <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+                That link expired or was already used. Request a new one below.
+              </p>
+            )}
+
+            <form onSubmit={sendLink} className="mt-6 space-y-4">
+              <div>
+                <label htmlFor="email" className="text-sm font-medium text-brand-charcoal">
+                  Email address
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green"
+                />
+              </div>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-full bg-brand-green px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-green-deep disabled:opacity-50"
+              >
+                {loading ? "Sending…" : "Send login link"}
+              </button>
+            </form>
+          </>
         )}
       </div>
     </main>

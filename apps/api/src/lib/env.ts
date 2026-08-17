@@ -18,6 +18,14 @@ const envSchema = z.object({
   // backend (e.g. "moonshotai/Kimi-K2-Instruct-0905:together"). Omit the
   // suffix to let HF pick the fastest available provider.
   HF_INFERENCE_MODEL: z.string().default("moonshotai/Kimi-K2-Instruct-0905"),
+  // Optional — enables the Gemini (via Vertex AI) solar-profile
+  // plausibility check. GCP_SA_KEY is the full service account JSON key
+  // content (not a file path) — paste the whole file's contents as the
+  // env var value. All three must be set together, or the feature
+  // no-ops cleanly.
+  GCP_SA_KEY: z.string().optional(),
+  GOOGLE_CLOUD_PROJECT: z.string().optional(),
+  GOOGLE_CLOUD_LOCATION: z.string().default("us-central1"),
   // "false" disables the scheduler entirely — anything else (including
   // unset, which defaults to "true") enables it. Deliberately not
   // z.coerce.boolean(), which treats ANY non-empty string as true.

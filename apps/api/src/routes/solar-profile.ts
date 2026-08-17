@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { supabase } from "../lib/supabase.js";
 import { requireAuth } from "../lib/auth.js";
+import { reviewSolarProfile } from "../lib/gemini-vertex.js";
 
 // Nigeria average peak sun hours — a documented, reasonable assumption,
 // not a precise irradiance calculation (that would need real weather/geo
@@ -62,6 +63,14 @@ export async function solarProfileRoutes(app: FastifyInstance) {
       dailyGenerationKwh = Number(((panelWatts * ASSUMED_PEAK_SUN_HOURS) / 1000).toFixed(3));
     }
 
+    // Advisory only — never blocks the save. Skips cleanly (returns null)
+    // if Vertex AI isn't configured.
+    const review = await reviewSolarProfile({
+      panelWatts: panelWatts ?? null,
+      dailyGenerationKwh,
+      dailyConsumptionKwh,
+    });
+
     const { data, error } = await supabase
       .from("solar_profiles")
       .upsert(
@@ -73,6 +82,8 @@ export async function solarProfileRoutes(app: FastifyInstance) {
           location_text: locationText,
           price_per_session_ngn: pricePerSessionNgn,
           is_listed: isListed,
+          ai_plausible: review?.plausible ?? null,
+          ai_review_note: review?.note ?? null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id" }
@@ -84,6 +95,11 @@ export async function solarProfileRoutes(app: FastifyInstance) {
       return reply.status(500).send({ status: "error", message: error.message });
     }
 
-    return { status: "ok", data, estimatedFromWattage: parsed.data.dailyGenerationKwh === undefined };
+    return {
+      status: "ok",
+      data,
+      estimatedFromWattage: parsed.data.dailyGenerationKwh === undefined,
+      aiReviewRan: review !== null,
+    };
   });
 }

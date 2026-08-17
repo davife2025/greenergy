@@ -9,12 +9,13 @@ export default function SolarProfilePage() {
   const [dailyConsumptionKwh, setDailyConsumptionKwh] = useState("");
   const [locationText, setLocationText] = useState("");
   const [pricePerSessionNgn, setPricePerSessionNgn] = useState("200");
-  const [isListed, setIsListed] = useState(false);
+  const [isListed, setIsListed] = useState(true);
   const [excessPreview, setExcessPreview] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [aiNote, setAiNote] = useState<{ plausible: boolean; note: string } | null>(null);
 
   useEffect(() => {
     apiFetch("/solar-profile")
@@ -59,7 +60,7 @@ export default function SolarProfilePage() {
     setSaved(false);
 
     try {
-      await apiFetch("/solar-profile", {
+      const result = await apiFetch("/solar-profile", {
         method: "PUT",
         body: JSON.stringify({
           panelWatts: panelWatts ? Number(panelWatts) : undefined,
@@ -71,6 +72,11 @@ export default function SolarProfilePage() {
         }),
       });
       setSaved(true);
+      if (result.data?.ai_review_note) {
+        setAiNote({ plausible: result.data.ai_plausible !== false, note: result.data.ai_review_note });
+      } else {
+        setAiNote(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -194,11 +200,37 @@ export default function SolarProfilePage() {
             onChange={(e) => setIsListed(e.target.checked)}
             className="h-4 w-4 rounded border-neutral-300"
           />
-          List my excess energy publicly
+          List my excess energy publicly (on by default — uncheck to hide it)
         </label>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {saved && <p className="text-sm text-brand-green">Saved.</p>}
+        {saved && (
+          <div className="rounded-lg bg-brand-green/10 px-3 py-2 text-sm text-brand-green">
+            <p className="font-medium">Saved.</p>
+            {isListed ? (
+              <p className="mt-1 text-brand-charcoal/70">
+                Your listing is live and visible to others searching "{locationText}".
+                You won't see it yourself on Find Energy — the marketplace hides your
+                own listing from your own search, same as you can't buy your own excess.
+              </p>
+            ) : (
+              <p className="mt-1 text-brand-charcoal/70">
+                This listing is saved but hidden — check "List my excess energy
+                publicly" above and save again to make it visible.
+              </p>
+            )}
+          </div>
+        )}
+        {aiNote && (
+          <p
+            className={`rounded-lg px-3 py-2 text-sm ${
+              aiNote.plausible ? "bg-brand-green/10 text-brand-green" : "bg-amber-50 text-amber-700"
+            }`}
+          >
+            {aiNote.plausible ? "✓ " : "⚠ "}
+            {aiNote.note}
+          </p>
+        )}
 
         <button
           type="submit"

@@ -55,7 +55,7 @@ async function main() {
     "ADMIN_JOB_SECRET",
     "PAYSTACK_SECRET_KEY",
   ];
-  const optional = ["HF_TOKEN"];
+  const optional = ["HF_TOKEN", "GCP_SA_KEY"];
 
   for (const key of required) {
     const value = process.env[key];

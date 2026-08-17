@@ -25,21 +25,21 @@ function LeafMark({ className = "" }: { className?: string }) {
   );
 }
 
-function PayoutCard() {
+function ListingCard() {
   return (
     <div className="relative mx-auto w-full max-w-sm rotate-2 rounded-2xl border border-black/5 bg-white p-6 shadow-xl shadow-brand-charcoal/10 sm:rotate-3">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium uppercase tracking-widest text-neutral-400">
-          Greenenergy payout
+          Excess energy sold
         </span>
         <LeafMark className="h-6 w-6" />
       </div>
 
       <p className="mt-6 font-display text-4xl font-bold text-brand-charcoal">
-        ₦1,240
+        ₦200
       </p>
       <p className="mt-1 text-sm text-neutral-500">
-        Credited to your Opay wallet · this month
+        Paid instantly via Paystack · neighbor 300m away
       </p>
 
       <div className="mt-6 flex items-end gap-1">
@@ -53,8 +53,8 @@ function PayoutCard() {
       </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-black/5 pt-4 text-sm">
-        <span className="text-neutral-500">From 4.2 kWh of solar use</span>
-        <span className="font-medium text-brand-green">+ this month</span>
+        <span className="text-neutral-500">Near Shoprite, Ikeja</span>
+        <span className="font-medium text-brand-green">1.8 kWh shared</span>
       </div>
     </div>
   );
@@ -63,18 +63,18 @@ function PayoutCard() {
 const steps = [
   {
     number: "01",
-    title: "Link your energy account",
-    body: "Connect your existing solar or PAYG provider in a couple of taps. No new hardware to install.",
+    title: "List your excess energy",
+    body: "Tell us your solar panel's output and your home's usage. We work out what's spare and list it for you.",
   },
   {
     number: "02",
-    title: "We verify and pool your usage",
-    body: "Your clean energy use is checked and combined with thousands of other households into credit-eligible batches.",
+    title: "Someone nearby finds you",
+    body: "People searching for a charge nearby see your listing by location and request access.",
   },
   {
     number: "03",
-    title: "Get paid monthly",
-    body: "Your share of the resulting carbon revenue lands in your mobile money wallet — automatically.",
+    title: "Get paid instantly",
+    body: "They pay through Paystack before showing up. You get your share the moment they confirm they got their charge.",
   },
 ];
 
@@ -111,13 +111,13 @@ export default async function Home() {
             Now piloting in Nigeria
           </span>
           <h1 className="mt-6 font-display text-4xl font-bold leading-tight tracking-tight text-brand-charcoal sm:text-5xl">
-            Your solar panel already earns you money.
-            <span className="text-brand-green"> You're just not getting paid.</span>
+            You have solar power to spare.
+            <span className="text-brand-green"> Someone nearby needs it.</span>
           </h1>
           <p className="mt-6 max-w-md text-lg text-neutral-600">
-            Greenenergy links to the clean energy you already use, turns it into
-            verified carbon credits, and pays your share straight to your
-            mobile money wallet.
+            List your excess solar energy, get found by people nearby who
+            need to charge a device, and get paid instantly through
+            Paystack — no waiting, no middlemen.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
@@ -141,7 +141,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <PayoutCard />
+        <ListingCard />
       </section>
 
       <section id="how-it-works" className="border-t border-black/5 bg-brand-gray/50">
@@ -171,7 +171,7 @@ export default async function Home() {
         <div className="flex items-center gap-2">
           <LeafMark className="h-5 w-5" />
           <span className="text-sm text-neutral-500">
-            © {new Date().getFullYear()} Greenenergy. Get paid for the power you already make.
+            © {new Date().getFullYear()} Greenenergy. Turning spare solar power into someone's next charge.
           </span>
         </div>
       </footer>

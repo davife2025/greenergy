@@ -87,6 +87,8 @@ export interface SolarProfile {
   dailyGenerationKwh: number;
   dailyConsumptionKwh: number;
   excessKwh: number;
+  aiPlausible: boolean | null;
+  aiReviewNote: string | null;
   locationText: string;
   pricePerSessionNgn: number;
   isListed: boolean;
